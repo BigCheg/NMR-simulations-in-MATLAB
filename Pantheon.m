@@ -14,8 +14,8 @@ Weighting_value = 20;               % 'Power' of the above weighting type
 Searchedppm = 9.8;                  % The ppm value that the '2D' data will compare itself to.
 Additional_Sim_Scaling = 1;          % Used to bring down peak heights to combat artifact
 Spectral_Width = 26041;              % Only needs to be set for R16_3_2
-SimType = '2D';                      % 2D or 3D
-MathType3DWeighting = 'Gauss';        % Gauss or Matt
+SimType = '3D';                      % 2D or 3D
+MathType3DWeighting = 'Matt';        % Gauss or Matt
 Experiment_Type = 'SC212';            % Currently Available: R16_3_2 SC212 C313
 PlotMode = 'Solo';                % Solo or Compare
 ExpFile = '20220511_NalFA_NRF4_0.7mm.txt';                % Name of the bruker txt file(must be 2D) or processed .mat file for R16_3_2
@@ -367,51 +367,33 @@ end
 %% Processes data
 switch SimType
     case '2D'
-        switch Experiment_Type
-            case 'R16_3_2'
-                FID=normalize(FID);
-                FID=dcOffset(FID,DCcor);
-                FID=leftShift(FID,ls);
-                FID=windowFID(FID,sw,Weighting_type,Weighting_value);
-                SPE=FT(FID,zf);
-                SPE=baselineCorrect(SPE,sw,bo,bp);
-                FREQ=getFrequency(SPE,lf,hf);
-                close all
+        FID=normalize(FID);
+        FID=dcOffset(FID,DCcor);
+        FID=leftShift(FID,ls);
+        FID=windowFID(FID,sw,Weighting_type,Weighting_value);
+        SPE=FT(FID,zf);
+        SPE=baselineCorrect(SPE,sw,bo,bp);
+        FREQ=getFrequency(SPE,lf,hf);
+        close all
 
-            case 'SC212'
-                FID=normalize(FID);
-                FID=dcOffset(FID,DCcor);
-                FID=leftShift(FID,ls);
-                FID=windowFID(FID,sw,Weighting_type,Weighting_value);
-                SPE=FT(FID,zf);
-                SPE=baselineCorrect(SPE,sw,bo,bp);
-                FREQ=getFrequency(SPE,lf,hf);
-                close all
-
-            case 'C313'
-                FID=normalize(FID);
-                FID=dcOffset(FID,DCcor);
-                FID=leftShift(FID,ls);
-                FID=windowFID(FID,sw,Weighting_type,Weighting_value);
-                SPE=FT(FID,zf);
-                SPE=baselineCorrect(SPE,sw,bo,bp);
-                FREQ=getFrequency(SPE,lf,hf);
-                close all
-        end
     case '3D'
         switch MathType3DWeighting
             case 'Gauss'
                 %% Weights data
-                points = zeros(length(data{1,1}),270);
-                X = -2:0.1:24.9;
+                max_iso = max(ExcelProtonData(:,1)) + 2;
+                min_iso = min(ExcelProtonData(:,1)) - 2;
+                X = min_iso:0.1:max_iso;
+                X_rounded = round(X, 2);
+                len =  length(X);
+                points = zeros(length(data{1,1}),len);
+                %X = -2:0.1:24.9;
 
                 for i = 1:length(isofm)
                     t = isofm(i);
-                    [~,u]=ismembertol(t,X);
+                    [~,u]=ismembertol(t,X,1e-2);
                     p = data{i,1};
                     p = transpose(p);
                     points(:,u) = p;
-                    clear t u p ~;
                 end
                 preweight = [];
                 for i = 1:length(data{1,1})
@@ -424,7 +406,7 @@ switch SimType
                 for i = 1:length(data{1,1})
                     asd = preweight(i,:);
                     asd = transpose(asd );
-                    asd  = asd (1:270);
+                    asd  = asd (1:len);
                     asd  = windowFID(asd,sw,Weighting_type,Weighting_2D);
                     asd  = transpose(asd);
                     asd  = fft(asd );
@@ -436,8 +418,12 @@ switch SimType
                 Z = real(Z);
             case 'Matt'
                 %% Weights data
-                points = zeros(length(data{1,1}),270);
-                X = -2:0.1:24.9;
+                max_iso = max(ExcelProtonData(:,1)) + 2;
+                min_iso = min(ExcelProtonData(:,1)) - 2;
+                X = min_iso:0.1:max_iso;
+                X_rounded = round(X, 2);
+                len =  length(X);
+                points = zeros(length(data{1,1}),len);
                 X = transpose(X);
                 %% Add X slices
                 for i = 1:length(isofm)

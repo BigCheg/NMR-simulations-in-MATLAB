@@ -14,7 +14,7 @@ Weighting_value = 20;               % 'Power' of the above weighting type
 Searchedppm = 9.8;                  % The ppm value that the '2D' data will compare itself to.
 Additional_Sim_Scaling = 1;          % Used to bring down peak heights to combat artifact
 Spectral_Width = 26041;              % Only needs to be set for R16_3_2
-SimType = '2D';                      % 2D or 3D
+SimType = '3D';                      % 2D or 3D
 MathType3DWeighting = 'Gauss';        % Gauss or Matt
 Experiment_Type = 'SC212';            % Currently Available: R16_3_2 SC212 C313
 PlotMode = 'Compare';                % Solo or Compare
@@ -424,7 +424,7 @@ switch SimType
                     p = data{i,1};
                     p = transpose(p);
                     points(:,u) = p;
-                    clear t u p ~;
+                    %clear t u p ~;
                 end
                 preweight = [];
                 for i = 1:length(data{1,1})
