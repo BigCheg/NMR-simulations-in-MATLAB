@@ -1,0 +1,80 @@
+spinsys {
+  channels 1H 
+  nuclei 1H
+  shift 1 0p 12p 0.61 0 0 0
+}
+
+par {
+  spin_rate       58600
+  np              128
+  crystal_file    zcw143
+  gamma_angles    32
+  start_operator  I1x
+  detect_operator I1p
+  proton_frequency 400e6   
+  variable N	  2
+  variable n	  2
+  variable nu     1
+  variable S	  1	 
+  sw		  12500
+  verbose         1101
+  #rfprof_file     1.3Profile.rf
+}
+
+proc pulseq {} {
+  global par
+
+  maxdt 1.0
+
+  set rf [expr 4.*$par(spin_rate)]
+  set t90 [expr 0.25e6/$rf]
+  set t360 [expr 1.0e6/$rf]
+  set t540 [expr 1.5e6/$rf]
+  set t270 [expr 0.75e6/$rf]
+
+  if {$par(S) == 1} { 
+    acq
+    for {set i 0} {$i < [expr $par(np)/(2*$par(n))-1]} {incr i} {
+      for {set j 0} {$j < $par(n)} {incr j} {
+        set phi [expr 360.*$j*$par(nu)/$par(N)]
+        pulse $t90 $rf $phi
+        pulse $t360 $rf [expr 180.+$phi]
+        pulse $t540 $rf $phi
+        pulse $t360 $rf [expr 180.+$phi]
+        pulse $t90 $rf $phi
+      }
+
+      for {set j [expr $par(n)]} {$j > 0} {incr j -1} {
+        set phi [expr 360.*($j-1)*$par(nu)/$par(N)]
+        pulse $t90 $rf $phi
+        pulse $t360 $rf [expr 180.+$phi]
+        pulse $t540 $rf $phi
+        pulse $t360 $rf [expr 180.+$phi]
+        pulse $t90 $rf $phi
+         
+      }
+     acq
+    }
+  }
+
+  if {$par(S) == 0} { 
+    acq
+    for {set i 0} {$i < [expr $par(np)/$par(n)-1]} {incr i} {
+      for {set j 0} {$j < $par(n)} {incr j} {
+        set phi [expr 360.*$j*$par(nu)/$par(N)]
+        pulse $t90 $rf $phi
+        pulse $t360 $rf [expr 180.+$phi]
+        pulse $t540 $rf $phi
+        pulse $t360 $rf [expr 180.+$phi]
+        pulse $t90 $rf $phi
+        acq
+      }
+    }
+  }
+}
+
+proc main {} {
+  global par
+  set f [fsimpson]
+  fsave $f $par(name).fid
+}

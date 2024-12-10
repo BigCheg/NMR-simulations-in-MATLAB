@@ -1,0 +1,67 @@
+spinsys {
+  channels 1H 
+  nuclei 1H
+  shift 1 0p 12p 0.61 0 0 0
+}
+
+par {
+  spin_rate       58600
+  np              128
+  crystal_file    zcw143
+  gamma_angles    32
+  start_operator  I1z
+  detect_operator I1z
+  proton_frequency 400e6            
+  variable N	  16
+  variable n	  3
+  variable nu     2
+  sw		  12500
+  conjugate_fid   true
+
+# change the following TWO entries 
+# Note: s is no. of R(phi)R(-phi) PAIRS between sampling points i.e half the no. of R s
+# Note: sync is number of sampling points required before sampling coincides with a whole cycle again sync = LCM(N,2*s)/(2*s)
+
+  variable s      6
+  variable sync   4
+
+
+
+  rfprof_file     1.3Profile.rf
+  
+  verbose         1101
+}
+
+proc pulseq {} {
+  global par
+
+  maxdt 1.0
+
+  set rf [expr $par(N)*$par(spin_rate)/(2.0*$par(n))]
+  set t180 [expr 0.5e6/$rf]
+  set ph [expr 180.0*$par(nu)/$par(N)]
+
+  for {set j 0} {$j < $par(sync)} {incr j} {
+    reset [expr 2*$j*$par(s)*$t180]
+    for {set i 0} {$i < $par(s)} {incr i} {
+      pulse $t180 $rf $ph
+      pulse $t180 $rf [expr -$ph]
+    }
+    store [expr $j+1]
+  }
+
+  reset
+  acq
+  for {set i 1} {$i < [expr $par(np)/$par(sync)]} {incr i} {
+    for {set j 0} {$j < $par(sync)} {incr j} {
+      prop [expr $j+1]
+      acq
+    }
+  }
+}
+
+proc main {} {
+  global par
+  set f [fsimpson]
+  fsave $f $par(name).fid
+}

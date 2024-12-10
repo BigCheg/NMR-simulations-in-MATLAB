@@ -1,0 +1,124 @@
+spinsys {
+  channels 1H 
+  nuclei 1H
+shift 1 0p 20p 0.2 0 0 0
+}
+
+par {
+  spin_rate       51000
+  np              96
+  crystal_file    143
+  gamma_angles    10
+  start_operator  I1x
+  detect_operator I1p
+  proton_frequency 1000e6
+  variable N	  3
+  variable n	  3
+  variable nu     1
+ #variable S	  1	 
+  sw		  26041
+  verbose         1101
+  rfprof_file       BigProfile.rf
+}
+
+proc pulseq {} {
+  global par
+
+  maxdt 1.0
+
+  set rf [expr 4.*$par(spin_rate)]
+  set t90 [expr 0.25e6/$rf]
+  set t360 [expr 1.0e6/$rf]
+  set t540 [expr 1.5e6/$rf]
+  set t270 [expr 0.75e6/$rf]
+
+# if {$par(S) == 1} { 
+    acq
+    for {set i 0} {$i < 31} {incr i} {
+
+# ph1= (6) 0 = 360/6 * 0 = 0.0
+# ph2= (6) 3 = 360/6 * 3 = 180.0
+# ph3= (6) 2 = 360/6 * 2 = 120.0
+# ph4= (6) 5 = 360/6 * 5 = 300.0
+# ph5= (6) 4 = 360/6 * 4 = 240.0
+# ph6= (6) 1 = 360/6 * 1 = 60.0
+
+        pulse $t90 $rf  0.0
+        pulse $t360 $rf 180.0
+        pulse $t540 $rf 0.0
+        pulse $t360 $rf 180.0
+        pulse $t90 $rf  0.0
+
+        pulse $t90 $rf  120.0
+        pulse $t360 $rf 300.0
+        pulse $t540 $rf 120.0
+        pulse $t360 $rf 300.0
+        pulse $t90 $rf  120.0
+
+        pulse $t90 $rf  240.0
+        pulse $t360 $rf 60.0
+        pulse $t540 $rf 240.0
+        pulse $t360 $rf 60.0
+        pulse $t90 $rf  240.0
+
+# ph1= (6) 0 = 360/6 * 0 = 0.0
+# ph2= (6) 3 = 360/6 * 3 = 180.0
+# ph3= (6) 2 = 360/6 * 2 = 120.0
+# ph4= (6) 5 = 360/6 * 5 = 300.0
+# ph5= (6) 4 = 360/6 * 4 = 240.0
+# ph6= (6) 1 = 360/6 * 1 = 60.0
+
+        pulse $t90 $rf  240.0
+        pulse $t360 $rf 60.0
+        pulse $t540 $rf 240.0
+        pulse $t360 $rf 60.0
+        pulse $t90 $rf  240.0
+
+        pulse $t90 $rf  120.0
+        pulse $t360 $rf 300.0
+        pulse $t540 $rf 120.0
+        pulse $t360 $rf 300.0
+        pulse $t90 $rf  120.0
+
+        pulse $t90 $rf  0.0
+        pulse $t360 $rf 180.0
+        pulse $t540 $rf 0.0
+        pulse $t360 $rf 180.0
+        pulse $t90 $rf  0.0
+
+# ph1= (6) 0 = 360/6 * 0 = 0.0
+# ph2= (6) 3 = 360/6 * 3 = 180.0
+# ph3= (6) 2 = 360/6 * 2 = 120.0
+# ph4= (6) 5 = 360/6 * 5 = 300.0
+# ph5= (6) 4 = 360/6 * 4 = 240.0
+# ph6= (6) 1 = 360/6 * 1 = 60.0
+
+    acq
+
+    }
+
+# }
+
+# if {$par(S) == 0} { 
+#   acq
+#   for {set i 0} {$i < [expr $par(np)/$par(n)-1]} {incr i} {
+#     for {set j 0} {$j < $par(n)} {incr j} {
+#       set phi [expr 360.*$j*$par(nu)/$par(N)]
+#       pulse $t90 $rf $phi
+#       pulse $t360 $rf [expr 180.+$phi]
+#       pulse $t540 $rf $phi
+#       pulse $t360 $rf [expr 180.+$phi]
+#       pulse $t90 $rf $phi
+#     }
+#   acq
+#   }
+# }
+
+}
+
+proc main {} {
+  global par
+  set f [fsimpson]
+  fsave $f $par(name).fid
+}
+
