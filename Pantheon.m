@@ -3,7 +3,7 @@ addpath('C:\Matlab\development_pantheon_2\Functions')
 %% Settable Parameters
 Magnet = 1000;                        % Magnet strength in MHz
 CSA = 20;                          % 2D simulated Chemical Shift Anisotropy value
-Aysm = 0.2;                         % 2D simulated Asymmetry
+Aysm = 0.1;                         % 2D simulated Asymmetry
 Spinning_Speed = 50000;              % 2D or 3D simulation spinning speed
 Number_of_points = 96;               % Number of points in the f1 dimension of simulation
 Crystal_file = 143;                   % Crystal file number. Typically use 20, 143, 232, 615 NOTE  takes longer
@@ -14,10 +14,10 @@ Weighting_value = 20;               % 'Power' of the above weighting type
 Searchedppm = 9.8;                  % The ppm value that the '2D' data will compare itself to.
 Additional_Sim_Scaling = 1;          % Used to bring down peak heights to combat artifact
 Spectral_Width = 26041;              % Only needs to be set for R16_3_2
-SimType = '3D';                      % 2D or 3D
+SimType = '2D';                      % 2D or 3D
 MathType3DWeighting = 'Gauss';        % Gauss or Matt
 Experiment_Type = 'SC212';            % Currently Available: R16_3_2 SC212 C313
-PlotMode = 'Compare';                % Solo or Compare
+PlotMode = 'Solo';                % Solo or Compare
 ExpFile = '20220511_NalFA_NRF4_0.7mm.txt';                % Name of the bruker txt file(must be 2D) or processed .mat file for R16_3_2
 ExcelProtonData = 'csatest.xlsx';  % Name of the excel file containing the CASTEP data (column 1: Iso, column 2: Aniso, column 3: Aysmmetry)
 Artifact_Removal = 'Off';            % Removes the artifact at 0Hz in experimental data
@@ -231,9 +231,9 @@ switch SimType
         movefile ( filename, 'RRfiles');
 
     case '3D'
-        for i = 1:length(ExcelProtonData)
-            CSA =ExcelProtonData(i,2);
-            Aysm =ExcelProtonData(i,3);
+        for j = 1:length(ExcelProtonData)
+            CSA =ExcelProtonData(j,2);
+            Aysm =ExcelProtonData(j,3);
             text = fileread(infile);
             lines = strsplit(text, '\n'); 
             for i = 1:length(lines)
@@ -256,9 +256,9 @@ switch SimType
                 end
             end
             updated_text = strjoin(lines, '\n'); 
-            filename = ['RRfiles/RR', num2str(i), '.in'];
+            filename = ['RRfiles/RR', num2str(j), '.in'];
             file = fopen(filename,'w');
-            fprintf(file,newtext1);
+            fprintf(file,updated_text);
             fclose(file);
         end
 end
@@ -761,13 +761,13 @@ switch SimType
         switch PlotMode
             case 'Compare'
                 %% Plots Sim data
-                pl=[1,0.75,0.7,0.65,0.6,0.55,0.5,0.49,0.48,0.47,0.46,0.45,0.44,0.43,0.42,0.41,0.4,0.39,0.38,0.37,0.36,0.35,0.34,0.33,0.32,0.31,0.3,0.29,0.28,0.27,0.26,0.25,0.24,0.23,0.22,0.21,0.2,0.19,0.18,0.17,0.16,0.15,0.14,0.13,0.12,0.11,0.1,0.09,0.08,0.07,0.06,0.05,0.04,0.03,0.02,0.01];
+                pl=[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1];
                 pl=pl*max(max(Z));
                 contour(X,Y,Z,pl,'k');
                  set(gca, 'XDir','reverse') %reverse x axis
                 hold on
                 %% Plots Experimental data
-                pl=[1,0.75,0.7,0.65,0.6,0.55,0.5,0.49,0.48,0.47,0.46,0.45,0.44,0.43,0.42,0.41,0.4,0.39,0.38,0.37,0.36,0.35,0.34,0.33,0.32,0.31,0.3,0.29,0.28,0.27,0.26,0.25,0.24,0.23,0.22,0.21,0.2,0.19,0.18,0.17,0.16,0.15,0.14,0.13,0.12,0.11,0.1];
+                pl=[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1];
                 %pl=[1.0,0.95,0.9,0.85,0.8,0.75,0.7,0.65,0.6,0.55,0.5,0.45,0.4,0.35,0.3,0.25,0.2];
                 pl=pl*max(max(real(ExpZ)));
                 contour(ExpX,ExpY,ExpZ,pl,'r')
