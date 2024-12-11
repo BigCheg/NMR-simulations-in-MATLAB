@@ -3,7 +3,7 @@ addpath('C:\Matlab\development_pantheon_2\Functions')
 %% Settable Parameters
 Magnet = 1000;                        % Magnet strength in MHz
 CSA = 20;                          % 2D simulated Chemical Shift Anisotropy value
-Aysm = 0.2;                         % 2D simulated Asymmetry
+Aysm = 0.1;                         % 2D simulated Asymmetry
 Spinning_Speed = 50000;              % 2D or 3D simulation spinning speed
 Number_of_points = 96;               % Number of points in the f1 dimension of simulation
 Crystal_file = 143;                   % Crystal file number. Typically use 20, 143, 232, 615 NOTE  takes longer
@@ -11,11 +11,11 @@ Gamma_Angle = 10;                     % Number of angles tested. ~5-10 for quick
 DCcor = 2;                           % Number points of the FID that are averaged to bring the dipole-dipole coulping down.
 Weighting_type = 'Gaussian';         % Type of weighting parameter
 Weighting_value = 20;               % 'Power' of the above weighting type
-Searchedppm = 9.8;                  % The ppm value that the '2D' data will compare itself to.
+Searchedppm = 5;                  % The ppm value that the '2D' data will compare itself to.
 Additional_Sim_Scaling = 1;          % Used to bring down peak heights to combat artifact
 Spectral_Width = 26041;              % Only needs to be set for R16_3_2
-SimType = '3D';                      % 2D or 3D
-MathType3DWeighting = 'Gauss';        % Gauss or Matt
+SimType = '2D';                      % 2D or 3D
+MathType3DWeighting = 'Matt';        % Gauss or Matt
 Experiment_Type = 'SC212';            % Currently Available: R16_3_2 SC212 C313
 PlotMode = 'Compare';                % Solo or Compare
 ExpFile = '20220511_NalFA_NRF4_0.7mm.txt';                % Name of the bruker txt file(must be 2D) or processed .mat file for R16_3_2

@@ -11,13 +11,13 @@ Gamma_Angle = 10;                     % Number of angles tested. ~5-10 for quick
 DCcor = 2;                           % Number points of the FID that are averaged to bring the dipole-dipole coulping down.
 Weighting_type = 'Gaussian';         % Type of weighting parameter
 Weighting_value = 20;               % 'Power' of the above weighting type
-Searchedppm = 9.8;                  % The ppm value that the '2D' data will compare itself to.
+Searchedppm = 5;                  % The ppm value that the '2D' data will compare itself to.
 Additional_Sim_Scaling = 1;          % Used to bring down peak heights to combat artifact
 Spectral_Width = 26041;              % Only needs to be set for R16_3_2
 SimType = '3D';                      % 2D or 3D
 MathType3DWeighting = 'Matt';        % Gauss or Matt
-Experiment_Type = 'R16_3_2';            % Currently Available: R16_3_2 SC212 C313
-PlotMode = 'Solo';                % Solo or Compare
+Experiment_Type = 'SC212';            % Currently Available: R16_3_2 SC212 C313
+PlotMode = 'Compare';                % Solo or Compare
 ExpFile = '20220511_NalFA_NRF4_0.7mm.txt';                % Name of the bruker txt file(must be 2D) or processed .mat file for R16_3_2
 ExcelProtonData = 'csatest.xlsx';  % Name of the excel file containing the CASTEP data (column 1: Iso, column 2: Aniso, column 3: Aysmmetry)
 Artifact_Removal = 'Off';            % Removes the artifact at 0Hz in experimental data
@@ -41,168 +41,60 @@ switch SimType
     case '2D'
         switch PlotMode
             case 'Compare'
+                infile = getInputFile(Experiment_Type);
                 switch Experiment_Type
                     case 'R16_3_2'
-                        infile = 'R16_3_2.in';
-                        load(ExpFile)
-                        closest = dsearchn(f2.fq,Searchedppm);
-                        ExpY = dat.smx(:,closest);
+                        load(ExpFile);
+                        closest = dsearchn(f2.fq, Searchedppm);
+                        ExpY = dat.smx(:, closest);
                         ExpX = f1.fq;
-                    case 'SC212'
-                        infile = 'SC212.in';
-                        Spectral_Width = Spinning_Speed/4;
-                        [F1LEFT,F1RIGHT,F2LEFT,F2RIGHT,NROWS,NCOLS] = readbrukertxt(ExpFile);
-                        raw = ExpFile;
-                        raw = readmatrix(raw);
-                        ExpZ = zeros(NROWS,NCOLS);
-                        for i = 1:NROWS
-                            blockstart =NCOLS*(i-1)+i;
-                            blockend = NCOLS+blockstart-1;
-                            ExpZ(i,:) = raw(blockstart:blockend,1);
-                        end
-                        f1high = F1LEFT*Magnet;
-                        f1low = F1RIGHT*Magnet;
-                        f2low = F2RIGHT;
-                        f2high = F2LEFT;
-                        ppmRangef1 = f1high+-f1low;
-                        incrementsf1 = ppmRangef1/NROWS;
-                        ppmRangef2 = f2high+-f2low;
-                        incrementsf2 = ppmRangef2/NCOLS;
-                        Expf1 = f1high:-incrementsf1:f1low;
-                        Expf1 = Expf1(1:NROWS);
-                        Expf2 = f2high:-incrementsf2:f2low;
-                        Expf2 = Expf2(1:NCOLS);
-                        Expf2 = Expf2';
-                        closest = dsearchn(Expf2,Searchedppm);
-                        ExpY = ExpZ(:,closest);
-                        ExpX = Expf1;
-                        ExpX = ExpX';
-                    case 'C313'
-                        infile = 'C313.in';
-                        Spectral_Width = Spinning_Speed/3;
-                        [F1LEFT,F1RIGHT,F2LEFT,F2RIGHT,NROWS,NCOLS] = readbrukertxt(ExpFile);
-                        raw = ExpFile;
-                        raw = readmatrix(raw);
-                        ExpZ = zeros(NROWS,NCOLS);
-                        for i = 1:NROWS
-                            blockstart =NCOLS*(i-1)+i;
-                            blockend = NCOLS+blockstart-1;
-                            ExpZ(i,:) = raw(blockstart:blockend,1);
-                        end
-                        f1high = F1LEFT*Magnet;
-                        f1low = F1RIGHT*Magnet;
-                        f2low = F2RIGHT;
-                        f2high = F2LEFT;
-                        ppmRangef1 = f1high+-f1low;
-                        incrementsf1 = ppmRangef1/NROWS;
-                        ppmRangef2 = f2high+-f2low;
-                        incrementsf2 = ppmRangef2/NCOLS;
-                        Expf1 = f1high:-incrementsf1:f1low;
-                        Expf1 = Expf1(1:NROWS);
-                        Expf2 = f2high:-incrementsf2:f2low;
-                        Expf2 = Expf2(1:NCOLS);
-                        Expf2 = Expf2';
-                        closest = dsearchn(Expf2,Searchedppm);
-                        ExpY = ExpZ(:,closest);
-                        ExpX = Expf1;
-                        ExpX = ExpX';
+                    case {'SC212', 'C313'}
+                        Spectral_Width = Spinning_Speed / getDivider(Experiment_Type);
+                        [F1LEFT, F1RIGHT, F2LEFT, F2RIGHT, NROWS, NCOLS] = readbrukertxt(ExpFile);
+                        raw = readmatrix(ExpFile);
+                        ExpZ = reshapeRawData(raw, NROWS, NCOLS);
+                        [Expf1, Expf2] = computeFrequencies(F1LEFT, F1RIGHT, F2LEFT, F2RIGHT, Magnet, NROWS, NCOLS);
+                        Expf2 = Expf2(:); 
+                        Searchedppm = Searchedppm(:); 
+                        closest = dsearchn(Expf2, Searchedppm);
+                        ExpY = ExpZ(:, closest);
+                        ExpX = Expf1';
                 end
-
-
             case 'Solo'
-                switch Experiment_Type
-                    case 'R16_3_2'
-                        infile = 'R16_3_2.in';
-                    case 'SC212'
-                        infile = 'SC212.in';
-                    case 'C313'
-                        infile = 'C313.in';
-                end
+                infile = getInputFile(Experiment_Type);
         end
     case '3D'
         ExcelProtonData = readmatrix(ExcelProtonData);
         switch PlotMode
             case 'Compare'
+                infile = getInputFile(Experiment_Type);
                 switch Experiment_Type
                     case 'R16_3_2'
-                        infile = 'R16_3_2.in';
-                        load(ExpFile)
-                        ExpZ = dat.smx;
-                        ExpZ = real(ExpZ);
+                        load(ExpFile);
+                        ExpZ = real(dat.smx);
                         ExpY = f1.fq;
                         ExpX = f2.fq;
-                    case 'SC212'
-                        infile = 'SC212.in';
-                        Spectral_Width = Spinning_Speed/4;
-                        [F1LEFT,F1RIGHT,F2LEFT,F2RIGHT,NROWS,NCOLS] = readbrukertxt(ExpFile);
-                        raw = ExpFile;
-                        raw = readmatrix(raw);
-                        ExpZ = zeros(NROWS,NCOLS);
-                        for i = 1:NROWS
-                            blockstart =NCOLS*(i-1)+i;
-                            blockend = NCOLS+blockstart-1;
-                            ExpZ(i,:) = raw(blockstart:blockend,1);
-                        end
-                        f1high = F1LEFT*Magnet;
-                        f1low = F1RIGHT*Magnet;
-                        f2low = F2RIGHT;
-                        f2high = F2LEFT;
-                        ppmRangef1 = f1high+-f1low;
-                        incrementsf1 = ppmRangef1/NROWS;
-                        ppmRangef2 = f2high+-f2low;
-                        incrementsf2 = ppmRangef2/NCOLS;
-                        Expf1 = f1high:-incrementsf1:f1low;
-                        Expf1 = Expf1(1:NROWS);
-                        Expf2 = f2high:-incrementsf2:f2low;
-                        Expf2 = Expf2(1:NCOLS);
-                        ExpX = Expf2';
-                        ExpY = Expf1;
-                    case 'C313'
-                        infile = 'C313.in';
-                        Spectral_Width = Spinning_Speed/3;
-                        [F1LEFT,F1RIGHT,F2LEFT,F2RIGHT,NROWS,NCOLS] = readbrukertxt(ExpFile);
-                        raw = ExpFile;
-                        raw = readmatrix(raw);
-                        ExpZ = zeros(NROWS,NCOLS);
-                        for i = 1:NROWS
-                            blockstart =NCOLS*(i-1)+i;
-                            blockend = NCOLS+blockstart-1;
-                            ExpZ(i,:) = raw(blockstart:blockend,1);
-                        end
-                        f1high = F1LEFT*Magnet;
-                        f1low = F1RIGHT*Magnet;
-                        f2low = F2RIGHT;
-                        f2high = F2LEFT;
-                        ppmRangef1 = f1high+-f1low;
-                        incrementsf1 = ppmRangef1/NROWS;
-                        ppmRangef2 = f2high+-f2low;
-                        incrementsf2 = ppmRangef2/NCOLS;
-                        Expf1 = f1high:-incrementsf1:f1low;
-                        Expf1 = Expf1(1:NROWS);
-                        Expf2 = f2high:-incrementsf2:f2low;
-                        Expf2 = Expf2(1:NCOLS);
+                    case {'SC212', 'C313'}
+                        Spectral_Width = Spinning_Speed / getDivider(Experiment_Type);
+                        [F1LEFT, F1RIGHT, F2LEFT, F2RIGHT, NROWS, NCOLS] = readbrukertxt(ExpFile);
+                        raw = readmatrix(ExpFile);
+                        ExpZ = reshapeRawData(raw, NROWS, NCOLS);
+                        [Expf1, Expf2] = computeFrequencies(F1LEFT, F1RIGHT, F2LEFT, F2RIGHT, Magnet, NROWS, NCOLS);
                         ExpX = Expf2';
                         ExpY = Expf1;
                 end
-
             case 'Solo'
-                switch Experiment_Type
-                    case 'R16_3_2'
-                        infile = 'R16_3_2.in';
-                    case 'SC212'
-                        infile = 'SC212.in';
-                    case 'C313'
-                        infile = 'C313.in';
-                end
+                infile = getInputFile(Experiment_Type);
         end
 end
+
 %% Creates .in files
 mkdir RRfiles
 switch SimType
     case '2D'
         text = fileread(infile);
-        lines = strsplit(text, '\n');  
-        
+        lines = strsplit(text, '\n');
+
         for i = 1:length(lines)
             if contains(lines{i}, 'shift')
                 lines{i} = ['shift 1 0p ',num2str(CSA), 'p ', num2str(Aysm), ' 0 0 0'];
@@ -222,7 +114,7 @@ switch SimType
                 lines{i} = '  rfprof_file       BigProfile.rf';
             end
         end
-        updated_text = strjoin(lines, '\n');  
+        updated_text = strjoin(lines, '\n');
 
         filename = 'RRthing.in';
         file = fopen(filename,'w');
@@ -235,7 +127,7 @@ switch SimType
             CSA =ExcelProtonData(j,2);
             Aysm =ExcelProtonData(j,3);
             text = fileread(infile);
-            lines = strsplit(text, '\n'); 
+            lines = strsplit(text, '\n');
             for i = 1:length(lines)
                 if contains(lines{i}, 'shift')
                     lines{i} = ['shift 1 0p ',num2str(CSA), 'p ', num2str(Aysm), ' 0 0 0'];
@@ -255,7 +147,7 @@ switch SimType
                     lines{i} = '  rfprof_file       BigProfile.rf';
                 end
             end
-            updated_text = strjoin(lines, '\n'); 
+            updated_text = strjoin(lines, '\n');
             filename = ['RRfiles/RR', num2str(j), '.in'];
             file = fopen(filename,'w');
             fprintf(file,updated_text);
@@ -735,13 +627,13 @@ switch SimType
         switch PlotMode
             case 'Compare'
                 plot(ExpX,ExpY, 'color', 'r')
-                 set(gca, 'XDir','reverse') %reverse x axis
+                set(gca, 'XDir','reverse') %reverse x axis
                 hold on
                 plot(FREQ,SPE, 'color', 'k')
-                 set(gca, 'XDir','reverse') %reverse x axis
+                set(gca, 'XDir','reverse') %reverse x axis
             case 'Solo'
                 plot(FREQ,SPE, 'color', 'k')
-                 set(gca, 'XDir','reverse') %reverse x axis
+                set(gca, 'XDir','reverse') %reverse x axis
         end
     case '3D'
         switch PlotMode
@@ -750,7 +642,7 @@ switch SimType
                 pl=[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1];
                 pl=pl*max(max(Z));
                 contour(X,Y,Z,pl,'k');
-                 set(gca, 'XDir','reverse') %reverse x axis
+                set(gca, 'XDir','reverse') %reverse x axis
                 hold on
                 %% Plots Experimental data
                 pl=[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1];
@@ -813,4 +705,54 @@ switch SimType
         cd 'C:\Matlab\development_pantheon_2'
         rmdir Fidfiles
         rmdir RRfiles
+end
+
+
+
+ 
+%% Functions
+function infile = getInputFile(Experiment_Type)
+    switch Experiment_Type
+        case 'R16_3_2'
+            infile = 'R16_3_2.in';
+        case 'SC212'
+            infile = 'SC212.in';
+        case 'C313'
+            infile = 'C313.in';
+    end
+end
+
+function divider = getDivider(Experiment_Type)
+    switch Experiment_Type
+        case 'SC212'
+            divider = 4;
+        case 'C313'
+            divider = 3;
+    end
+end
+
+function ExpZ = reshapeRawData(raw, NROWS, NCOLS)
+    ExpZ = zeros(NROWS, NCOLS);
+    for i = 1:NROWS
+        blockstart = NCOLS * (i - 1) + i;
+        blockend = NCOLS + blockstart - 1;
+        ExpZ(i, :) = raw(blockstart:blockend, 1);
+    end
+end
+
+function [Expf1, Expf2] = computeFrequencies(F1LEFT, F1RIGHT, F2LEFT, F2RIGHT, Magnet, NROWS, NCOLS)
+    f1high = F1LEFT * Magnet;
+    f1low = F1RIGHT * Magnet;
+    f2low = F2RIGHT;
+    f2high = F2LEFT;
+
+    ppmRangef1 = f1high - f1low;
+    incrementsf1 = ppmRangef1 / NROWS;
+    ppmRangef2 = f2high - f2low;
+    incrementsf2 = ppmRangef2 / NCOLS;
+
+    Expf1 = f1high:-incrementsf1:f1low;
+    Expf1 = Expf1(1:NROWS);
+    Expf2 = f2high:-incrementsf2:f2low;
+    Expf2 = Expf2(1:NCOLS);
 end
