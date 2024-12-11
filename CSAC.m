@@ -1,7 +1,7 @@
 % Close previous plots
-
+clear
 close all;
-addpath('C:\Matlab\Clean Pantheon\CSACFunctions')
+addpath('C:\Matlab\development_pantheon_2\CSACFunctions')
 % Get directory
 
 if ~exist('dat','var')

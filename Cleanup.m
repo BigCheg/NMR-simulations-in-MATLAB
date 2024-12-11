@@ -1,13 +1,13 @@
 fclose('all');
 
-cd 'C:\Users\charl\Documents\MATLAB stuff\The God Code\Fidfiles'
+cd 'C:\Matlab\development_pantheon_2\Fidfiles'
 thing = 'RRthing.fid';
 
 delete (thing);
 clear thing
 
 
-cd 'C:\Users\charl\Documents\MATLAB stuff\The God Code\RRfiles'
+cd 'C:\Matlab\development_pantheon_2\RRfiles'
 
 
 thing = 'RRthing.in';
@@ -15,7 +15,7 @@ delete (thing)
 clear thing
 
 
-cd 'C:\Users\charl\Documents\MATLAB stuff\The God Code'
+cd 'C:\Matlab\development_pantheon_2'
 rmdir Fidfiles
 rmdir RRfiles
 clear
