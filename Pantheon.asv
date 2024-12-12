@@ -15,7 +15,7 @@ Searchedppm = 5;                  % The ppm value that the '2D' data will compar
 Additional_Sim_Scaling = 1;          % Used to bring down peak heights to combat artifact
 Spectral_Width = 26041;              % Only needs to be set for R16_3_2
 SimType = '3D';                      % 2D or 3D
-MathType3DWeighting = 'Gauss';        % Gauss or Matt
+MathType3DWeighting = 'Matt';        % Gauss or Matt
 Experiment_Type = 'SC212';            % Currently Available: R16_3_2 SC212 C313
 PlotMode = 'Compare';                % Solo or Compare
 ExpFile = '20220511_NalFA_NRF4_0.7mm.txt';                % Name of the bruker txt file(must be 2D) or processed .mat file for R16_3_2
@@ -218,7 +218,7 @@ switch SimType
             x = fullfile(fids, list{i});
             FID = readSimpson(x);
             sw=simpsonPar(x,'SW');
-            lf=-sw/2;
+            lf=-sw/2; % temporary scale
             hf=sw/2;
             FID=normalize(FID);
             FID=dcOffset(FID,DCcor);
@@ -229,7 +229,7 @@ switch SimType
             FREQ=getFrequency(SPE,lf,hf);
             SPE = real(SPE);
             data{i,1} = SPE; 
-            data{i,2} = FREQ; 
+            data{i,2} = FREQ; =
         end
         %% Iso ppm values
         isofm = ExcelProtonData(:,1);
@@ -257,21 +257,22 @@ switch SimType
                 X_rounded = round(X, 2);
                 len =  length(X);
                 points = zeros(length(data{1,1}),len);
+
                 for i = 1:length(isofm)
-                    isoval = isofm(i);
-                    [~,matched_iso_val]=ismembertol(isoval,X,1e-2);
+                    t = isofm(i);
+                    [~,u]=ismembertol(t,X,1e-2);
                     p = data{i,1};
                     p = transpose(p);
-                    points(:,matched_iso_val) = p;
+                    points(:,u) = p;
                 end
-                preweight = zeros(length(data{1,1}), size(points, 2));
+                preweight = [];
                 for i = 1:length(data{1,1})
                     datapoints = points(i,:);
                     datapoints = ifft(datapoints);
-                    preweight(i,:) = datapoints;
+                    preweight(i,:) = datapoints; %#ok<SAGROW>
                     clear datapoints
                 end
-                postweight = zeros(length(data{1,1}), size(points, 2));
+                postweight = [];
                 for i = 1:length(data{1,1})
                     asd = preweight(i,:);
                     asd = transpose(asd );
@@ -279,7 +280,7 @@ switch SimType
                     asd  = windowFID(asd,sw,Weighting_type,Weighting_2D);
                     asd  = transpose(asd);
                     asd  = fft(asd );
-                    postweight(i,:) = asd; 
+                    postweight(i,:) = asd ; %#ok<SAGROW>
                     clear points
                 end
                 postweight = real(postweight);
