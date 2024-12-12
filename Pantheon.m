@@ -15,9 +15,9 @@ Searchedppm = 5;                  % The ppm value that the '2D' data will compar
 Additional_Sim_Scaling = 1;          % Used to bring down peak heights to combat artifact
 Spectral_Width = 26041;              % Only needs to be set for R16_3_2
 SimType = '3D';                      % 2D or 3D
-MathType3DWeighting = 'Gauss';        % Gauss or Matt
+MathType3DWeighting = 'Matt';        % Gauss or Matt
 Experiment_Type = 'SC212';            % Currently Available: R16_3_2 SC212 C313
-PlotMode = 'Compare';                % Solo or Compare
+PlotMode = 'Solo';                % Solo or Compare
 ExpFile = '20220511_NalFA_NRF4_0.7mm.txt';                % Name of the bruker txt file(must be 2D) or processed .mat file for R16_3_2
 ExcelProtonData = 'csatest.xlsx';  % Name of the excel file containing the CASTEP data (column 1: Iso, column 2: Aniso, column 3: Aysmmetry)
 Artifact_Removal = 'Off';            % Removes the artifact at 0Hz in experimental data
@@ -260,9 +260,9 @@ switch SimType
                 for i = 1:length(isofm)
                     isoval = isofm(i);
                     [~,matched_iso_val]=ismembertol(isoval,X,1e-2);
-                    p = data{i,1};
-                    p = transpose(p);
-                    points(:,matched_iso_val) = p;
+                    temp_points = data{i,1};
+                    temp_points = transpose(temp_points);
+                    points(:,matched_iso_val) = temp_points;
                 end
                 preweight = zeros(length(data{1,1}), size(points, 2));
                 for i = 1:length(data{1,1})
@@ -273,13 +273,13 @@ switch SimType
                 end
                 postweight = zeros(length(data{1,1}), size(points, 2));
                 for i = 1:length(data{1,1})
-                    asd = preweight(i,:);
-                    asd = transpose(asd );
-                    asd  = asd (1:len);
-                    asd  = windowFID(asd,sw,Weighting_type,Weighting_2D);
-                    asd  = transpose(asd);
-                    asd  = fft(asd );
-                    postweight(i,:) = asd; 
+                    temp_points = preweight(i,:);
+                    temp_points = transpose(temp_points );
+                    temp_points  = temp_points (1:len);
+                    temp_points  = windowFID(temp_points,sw,Weighting_type,Weighting_2D);
+                    temp_points  = transpose(temp_points);
+                    temp_points  = fft(temp_points );
+                    postweight(i,:) = temp_points; 
                     clear points
                 end
                 postweight = real(postweight);
@@ -616,7 +616,7 @@ switch SimType
         switch PlotMode
             case 'Compare'
                 %% Plots Sim data
-                pl=[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1];
+                pl=[1.0,0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.01,0.001,0.0001,0.00001,0.000001,0.0000001,0.00000001,0.0000000001,0.00000000001,0.0000000000001];
                 pl=pl*max(max(Z));
                 contour(X,Y,Z,pl,'k');
                 set(gca, 'XDir','reverse') %reverse x axis
