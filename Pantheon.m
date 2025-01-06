@@ -159,15 +159,15 @@ switch SimType
     case '2D'
         command = sprintf('simpson RRfiles/RRthing.in');
         status = system(command);
-        completed =  "False";
-        while completed == False
+        completed =  false;
+        while completed == false
             QNAN_text=fileread('RRthing.fid');
             val = strfind(QNAN_text, 'QNAN');
-            if val>zero
+            if val>0
                 command = sprintf('simpson RRfiles/RRthing.in');
                 status = system(command);
             else
-                completed = "True";
+                completed = true;
             end
         end
     case '3D'
@@ -177,16 +177,16 @@ switch SimType
             command = sprintf('simpson RRfiles/RR%g.in', k);
             status = system(command);
         end
-        completed =  "False";
-        while completed == False
+        completed =  false;
+        while completed == false
             for i = 1:list
                 QNAN_text=fileread(['RR', num2str(i), '.fid']);
                 val = strfind(QNAN_text, 'QNAN');
-                if val>zero
+                if val>0
                     command = sprintf('simpson RRfiles/RR%g.in', i);
                     status = system(command);
                 end
-                completed = "True";
+                completed = true;
             end
         end
 end
