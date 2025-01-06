@@ -163,7 +163,7 @@ switch SimType
         while completed == false
             QNAN_text = fileread('RRthing.fid');
             val = strfind(QNAN_text, 'QNAN');
-            if val > 0
+            if val>0
                 command = sprintf('simpson RRfiles/RRthing.in');
                 status = system(command);
             else
@@ -181,7 +181,7 @@ switch SimType
             for i = 1:list
                 QNAN_text = fileread(['RR', num2str(i), '.fid']);
                 val = strfind(QNAN_text, 'QNAN');
-                if val > 0
+                if val>0
                     command = sprintf('simpson RRfiles/RR%g.in', i);
                     status = system(command);
                 end
